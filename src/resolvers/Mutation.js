@@ -11,6 +11,26 @@ function post(parent, args, context, info) {
   });
 }
 
+async function vote(parent, args, context, info) {
+  // 1
+  const userId = getUserId(context);
+
+  // 2
+  const linkExists = await context.prisma.$exists.vote({
+    user: { id: userId },
+    link: { id: args.linkId }
+  });
+  if (linkExists) {
+    throw new Error(`Already voted for link: ${args.linkId}`);
+  }
+
+  // 3
+  return context.prisma.createVote({
+    user: { connect: { id: userId } },
+    link: { connect: { id: args.linkId } }
+  });
+}
+
 async function signup(parent, args, context, info) {
   // 1
   const password = await bcrypt.hash(args.password, 10);
@@ -52,5 +72,6 @@ async function login(parent, args, context, info) {
 module.exports = {
   signup,
   login,
-  post
+  post,
+  vote
 };
